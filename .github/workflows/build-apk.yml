@@ -11,14 +11,27 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    - name: PWABuilder Android Action
-      uses: pwa-builder/pwa-action@v1.0.2
+    - name: Set up Java JDK
+      uses: actions/setup-java@v4
       with:
-        manifest-url: 'https://raw.githubusercontent.com/ahmedelzae2000-cmyk/my-video-bot/main/manifest.json'
-        output-dir: './output'
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install Bubblewrap
+      run: npm install -g @bubblewrap/cli
+
+    - name: Build Android App
+      run: |
+        npx @bubblewrap/cli init --manifest="https://raw.githubusercontent.com/ahmedelzae2000-cmyk/my-video-bot/main/manifest.json" --yes
+        npx @bubblewrap/cli build
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: VideoAI-App-APK
-        path: ./output/*.apk
+        path: ./*.apk
