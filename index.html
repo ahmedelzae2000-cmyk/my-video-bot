@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Video Creator</title>
+    <title>AI Video Creator Studio</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
         body { background-color: #0d1117; color: #c9d1d9; display: flex; flex-direction: column; height: 100vh; }
@@ -15,10 +15,17 @@
         .ai-msg { background: #21262d; border: 1px solid #30363d; color: #c9d1d9; align-self: flex-start; border-bottom-left-radius: 2px; width: 100%; }
         
         .scene-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px; margin-top: 10px; }
-        .scene-title { color: #58a6ff; font-weight: bold; margin-bottom: 6px; font-size: 1rem; border-bottom: 1px solid #30363d; padding-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }
-        .scene-desc { margin-bottom: 8px; color: #8b949e; }
-        .action-btn { background: #1f6feb; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: bold; margin-top: 5px; }
+        .scene-title { color: #58a6ff; font-weight: bold; margin-bottom: 8px; font-size: 1rem; border-bottom: 1px solid #30363d; padding-bottom: 6px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+        .scene-desc { margin-bottom: 10px; color: #8b949e; }
+        
+        .btn-group { display: flex; gap: 8px; }
+        .action-btn { background: #1f6feb; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: bold; }
         .action-btn:hover { background: #388bfd; }
+        .img-btn { background: #8957e5; }
+        .img-btn:hover { background: #a371f7; }
+
+        .scene-image-container { margin-top: 10px; text-align: center; }
+        .scene-image-container img { max-width: 100%; border-radius: 6px; border: 1px solid #30363d; margin-top: 5px; }
 
         #input-area { padding: 15px; background: #161b22; border-top: 1px solid #30363d; display: flex; gap: 10px; }
         input[type="text"] { flex: 1; background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 12px; color: #fff; outline: none; font-size: 1rem; }
@@ -30,17 +37,17 @@
 <body>
 
     <header>
-        <span>صانع الفيديوهات الذكي</span>
+        <span>استوديو صانع الفيديوهات الذكي</span>
         <input type="password" id="api-key-input" placeholder="أدخل Gemini API Key" oninput="saveKey()">
     </header>
 
     <div id="chat-container">
-        <div class="message ai-msg">أهلاً بك يا أحمد! أدخل المفتاح بالأعلى، واكتب فكرة الفيديو لنبدأ صناعة المشاهد والكروت المتكاملة.</div>
+        <div class="message ai-msg">أهلاً بك يا أحمد! أدخل المفتاح بالأعلى، واكتب فكرة الفيديو وسنقوم بتوليد السيناريو وتقسيمه لمشاهد مع أزرار التحكم الفوري وصور المشاهد.</div>
     </div>
 
     <div id="input-area">
         <input type="text" id="user-input" placeholder="اكتب فكرة الفيديو هنا..." onkeypress="handleKeyPress(event)">
-        <button onclick="sendMessage()">إرسال</button>
+        <button onclick="sendMessage()">إنشاء الفيديو</button>
     </div>
 
     <script>
@@ -87,7 +94,7 @@
 
             const aiMsg = document.createElement('div');
             aiMsg.className = 'message ai-msg';
-            aiMsg.textContent = "جاري إعداد كروت المشاهد...";
+            aiMsg.textContent = "جاري تأليف السيناريو وتقسيمه وتجهيز الاستوديو المتكامل...";
             container.appendChild(aiMsg);
             container.scrollTop = container.scrollHeight;
 
@@ -98,7 +105,7 @@
                     body: JSON.stringify({
                         contents: [{
                             parts: [{
-                                text: `أنت سيناريست ومخرج فيديو محترف. اكتب سيناريو فيديو بناءً على الفكرة: "${text}". قم بتقسيم السيناريو بوضوح إلى مشاهد، على أن يبدأ كل مشهد بعبارة "المشهد رقم X" متبوعاً بوصف الصورة المقترحة والتعليق الصوتي.`
+                                text: `أنت مخرج ومصمم محتوى فيديو محترف. اكتب سيناريو فيديو بناءً على الفكرة: "${text}". قم بتقسيم السيناريو بوضوح إلى مشاهد (المشهد 1، المشهد 2، إلخ)، واكتب لكل مشهد وصف الصورة والتعليق الصوتي.`
                             }]
                         }]
                     })
@@ -108,7 +115,7 @@
                 
                 if(data.candidates && data.candidates[0].content) {
                     const rawText = data.candidates[0].content.parts[0].text;
-                    aiMsg.innerHTML = "<strong>الكروت والمشاهد الجاهزة:</strong>";
+                    aiMsg.innerHTML = "<strong>🎬 استوديو المشاهد والسيناريو الجاهز:</strong>";
                     
                     const scenes = rawText.split(/المشهد\s*(رقم)?\s*\d+/);
                     scenes.forEach((sceneText, index) => {
@@ -119,9 +126,13 @@
                         card.innerHTML = `
                             <div class="scene-title">
                                 <span>المشهد رقم ${index}</span>
-                                <button class="action-btn" onclick="copyScene(this)">نسخ النص</button>
+                                <div class="btn-group">
+                                    <button class="action-btn" onclick="copyScene(this)">نسخ النص</button>
+                                    <button class="action-btn img-btn" onclick="generateSceneImage(this)">توليد صورة</button>
+                                </div>
                             </div>
                             <div class="scene-desc">${sceneText}</div>
+                            <div class="scene-image-container"></div>
                         `;
                         aiMsg.appendChild(card);
                     });
@@ -131,7 +142,7 @@
                     }
 
                 } else if(data.error) {
-                    aiMsg.textContent = "خطأ: " + (data.error.message || "تأكد من المفتاح.");
+                    aiMsg.textContent = "خطأ من جوجل: " + (data.error.message || "تأكد من صحة المفتاح.");
                 } else {
                     aiMsg.textContent = "عذراً، حدث خطأ في استجابة الخادم.";
                 }
@@ -142,11 +153,33 @@
         }
 
         function copyScene(btn) {
-            const cardText = btn.parentElement.nextElementSibling.textContent;
+            const cardText = btn.closest('.scene-card').querySelector('.scene-desc').textContent;
             navigator.clipboard.writeText(cardText).then(() => {
+                const originalText = btn.textContent;
                 btn.textContent = "تم النسخ!";
-                setTimeout(() => btn.textContent = "نسخ النص", 2000);
+                setTimeout(() => btn.textContent = originalText, 2000);
             });
+        }
+
+        function generateSceneImage(btn) {
+            const card = btn.closest('.scene-card');
+            const desc = card.querySelector('.scene-desc').textContent;
+            const imgContainer = card.querySelector('.scene-image-container');
+            
+            // استخراج وصف بصري مختصر لتوليد صورة عبر خدمات مجانية سريعة (Pollinations AI)
+            const promptEncoded = encodeURIComponent(desc.substring(0, 200));
+            imgContainer.innerHTML = `<p style="color: #8b949e; font-size: 0.85rem;">⏳ جاري رسم وتوليد صورة المشهد بالذكاء الاصطناعي...</p>`;
+            
+            const imageUrl = `https://pollinations.ai/p/${promptEncoded}?width=512&height=320&seed=${Math.floor(Math.random() * 1000)}`;
+            
+            const img = new Image();
+            img.src = imageUrl;
+            img.onload = function() {
+                imgContainer.innerHTML = `<img src="${imageUrl}" alt="صورة المشهد">`;
+            };
+            img.onerror = function() {
+                imgContainer.innerHTML = `<p style="color: #f85149; font-size: 0.85rem;">تعذر توليد الصورة، حاول مرة أخرى.</p>`;
+            };
         }
     </script>
 </body>
