@@ -32,7 +32,7 @@
     </div>
 
     <div id="input-area">
-        <input type="text" id="user-input" placeholder="اكتب فكرة الفيديو هنا (مثلاً: فيديو عن تاريخ الفضاء)..." onkeypress="handleKeyPress(event)">
+        <input type="text" id="user-input" placeholder="اكتب فكرة الفيديو هنا..." onkeypress="handleKeyPress(event)">
         <button onclick="sendMessage()">إرسال</button>
     </div>
 
@@ -80,18 +80,18 @@
 
             const aiMsg = document.createElement('div');
             aiMsg.className = 'message ai-msg';
-            aiMsg.textContent = "جاري تأليف السيناريو وتجهيز المشاهد بالذكاء الاصطناعي...";
+            aiMsg.textContent = "جاري تأليف السيناريو وتجهيز المشاهد...";
             container.appendChild(aiMsg);
             container.scrollTop = container.scrollHeight;
 
             try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{
                             parts: [{
-                                text: `أنت خبير صناعة محتوى وسيناريست. قم بتأليف سيناريو احترافي ومقسّم لمشاهد فيديو بناءً على الفكرة التالية: "${text}". لكل مشهد اكتب وصف الصورة المقترحة والتعليق الصوتي المناسب.`
+                                text: `أنت سيناريست محترف. اكتب سيناريو فيديو ومقسّم لمشاهد بناءً على الفكرة: "${text}".`
                             }]
                         }]
                     })
@@ -102,12 +102,12 @@
                 if(data.candidates && data.candidates[0].content) {
                     aiMsg.textContent = data.candidates[0].content.parts[0].text;
                 } else if(data.error) {
-                    aiMsg.textContent = "خطأ من جوجل: " + (data.error.message || "تأكد من صحة المفتاح.");
+                    aiMsg.textContent = "خطأ: " + (data.error.message || "تأكد من المفتاح.");
                 } else {
-                    aiMsg.textContent = "عذراً، لم يتم استلام رد صحيح. تأكد من المفتاح.";
+                    aiMsg.textContent = "عذراً، حدث خطأ في استجابة الخادم.";
                 }
             } catch (error) {
-                aiMsg.textContent = "حدث خطأ أثناء الاتصال بالخادم.";
+                aiMsg.textContent = "حدث خطأ في الاتصال بالشبكة.";
             }
             container.scrollTop = container.scrollHeight;
         }
