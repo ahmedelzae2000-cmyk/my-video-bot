@@ -25,15 +25,15 @@ jobs:
       with:
         node-version: '18'
 
-    - name: Install Bubblewrap CLI
+    - name: Install Bubblewrap
       run: npm install -g @bubblewrap/cli
 
-    - name: Configure Bubblewrap Environment
+    - name: Create Bubblewrap Config
       run: |
         mkdir -p ~/.bubblewrap
         echo "{\"jdkPath\":\"$JAVA_HOME\",\"androidSdkPath\":\"$ANDROID_HOME\"}" > ~/.bubblewrap/config.json
 
-    - name: Generate Project and Build APK
+    - name: Build Android App Non-Interactively
       run: |
         mkdir -p app
         cd app
@@ -46,6 +46,7 @@ jobs:
           "display": "standalone",
           "themeColor": "#000000",
           "navigationColor": "#000000",
+          "appVersion": "1.0.0",
           "appVersionName": "1.0.0",
           "appVersionCode": 1,
           "startUrl": "/ahmedelzae2000-cmyk/my-video-bot/main/index.html",
@@ -62,8 +63,8 @@ jobs:
           "minSdkVersion": 21
         }
         EOF
-        npx @bubblewrap/cli update --skipAsk
-        npx @bubblewrap/cli build
+        yes "1.0.0" | npx @bubblewrap/cli update
+        yes "" | npx @bubblewrap/cli build
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
