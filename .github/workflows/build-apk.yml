@@ -28,12 +28,12 @@ jobs:
     - name: Install Bubblewrap
       run: npm install -g @bubblewrap/cli
 
-    - name: Create Bubblewrap Config
+    - name: Configure Bubblewrap Environment
       run: |
         mkdir -p ~/.bubblewrap
         echo "{\"jdkPath\":\"$JAVA_HOME\",\"androidSdkPath\":\"$ANDROID_HOME\"}" > ~/.bubblewrap/config.json
 
-    - name: Build Android App Non-Interactively
+    - name: Build Android App
       run: |
         mkdir -p app
         cd app
@@ -50,8 +50,8 @@ jobs:
           "appVersionName": "1.0.0",
           "appVersionCode": 1,
           "startUrl": "/ahmedelzae2000-cmyk/my-video-bot/main/index.html",
-          "iconUrl": "https://raw.githubusercontent.com/ahmedelzae2000-cmyk/my-video-bot/main/icon.png",
-          "maskableIconUrl": "https://raw.githubusercontent.com/ahmedelzae2000-cmyk/my-video-bot/main/icon.png",
+          "iconUrl": "https://via.placeholder.com/512.png",
+          "maskableIconUrl": "https://via.placeholder.com/512.png",
           "generatorApp": "bubblewrap-cli",
           "webManifestUrl": "https://raw.githubusercontent.com/ahmedelzae2000-cmyk/my-video-bot/main/manifest.json",
           "fallbackType": "customtabs",
@@ -63,8 +63,7 @@ jobs:
           "minSdkVersion": 21
         }
         EOF
-        yes "1.0.0" | npx @bubblewrap/cli update
-        yes "" | npx @bubblewrap/cli build
+        npx @bubblewrap/cli build --manifest=twa-manifest.json --skipCluster
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
