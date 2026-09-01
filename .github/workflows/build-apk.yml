@@ -33,7 +33,7 @@ jobs:
         mkdir -p ~/.bubblewrap
         echo "{\"jdkPath\":\"$JAVA_HOME\",\"androidSdkPath\":\"$ANDROID_HOME\"}" > ~/.bubblewrap/config.json
 
-    - name: Generate TWA Manifest and Build
+    - name: Generate Project and Build APK
       run: |
         mkdir -p app
         cd app
@@ -60,6 +60,7 @@ jobs:
           "minSdkVersion": 21
         }
         EOF
+        npx @bubblewrap/cli update --skipAsk
         npx @bubblewrap/cli build
 
     - name: Upload APK Artifact
