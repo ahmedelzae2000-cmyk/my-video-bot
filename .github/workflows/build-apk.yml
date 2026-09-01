@@ -32,9 +32,10 @@ jobs:
       run: |
         mkdir -p ~/.bubblewrap
         echo "{\"jdkPath\":\"$JAVA_HOME\",\"androidSdkPath\":\"$ANDROID_HOME\"}" > ~/.bubblewrap/config.json
-        npx @bubblewrap/cli init --manifest="https://raw.githubusercontent.com/ahmedelzae2000-cmyk/my-video-bot/main/manifest.json" --directory="./app"
+        mkdir -p ./app
+        yes "" | npx @bubblewrap/cli init --manifest="https://raw.githubusercontent.com/ahmedelzae2000-cmyk/my-video-bot/main/manifest.json" --directory="./app"
         cd app
-        npx @bubblewrap/cli build
+        yes "" | npx @bubblewrap/cli build
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
