@@ -25,7 +25,7 @@ jobs:
       with:
         node-version: '18'
 
-    - name: Build APK Script
+    - name: Build TWA APK Direct
       run: |
         npm install -g @bubblewrap/cli
         mkdir -p ~/.bubblewrap
@@ -33,7 +33,6 @@ jobs:
         
         mkdir -p app && cd app
         
-        # إنشاء ملف الإعدادات
         cat <<EOF > twa-manifest.json
         {
           "packageId": "com.myvideobot.twa",
@@ -58,33 +57,9 @@ jobs:
         }
         EOF
 
-        # وإنشاء ملف الكود التفصيلي للبناء التلقائي
-        node -e '
-        const { Keytool, TwaManifest, GradleWrapper } = require("@bubblewrap/core");
-        const fs = require("fs");
-
-        async function run() {
-          const manifest = await TwaManifest.fromFile("./twa-manifest.json");
-          const keytool = new Keytool();
-          const keyOptions = {
-            path: "./android.keystore",
-            alias: "android",
-            keypairAlias: "android",
-            password: "password",
-            keypassword: "password",
-            fullName: "Developer",
-            organization: "Dev",
-            organizationalUnit: "Dev",
-            country: "US"
-          };
-          await keytool.createSigningKey(keyOptions);
-          
-          const gradleWrapper = new GradleWrapper();
-          const { buildTwa } = require("@bubblewrap/build");
-          await buildTwa(manifest, "./", keyOptions);
-        }
-        run().catch(console.error);
-        '
+        # تمرير المدخلات لتجنب التوقف التفاعلي وبناء المشروع فوراً
+        bubblewrap init --manifest=twa-manifest.json || true
+        bubblewrap build
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
