@@ -28,12 +28,11 @@ jobs:
     - name: Install Bubblewrap CLI
       run: npm install -g @bubblewrap/cli
 
-    - name: Build Android App
-      env:
-        JAVA_HOME: ${{ env.JAVA_HOME }}
-        ANDROID_HOME: ${{ env.ANDROID_HOME }}
+    - name: Configure and Build App
       run: |
-        npx @bubblewrap/cli init --manifest="https://raw.githubusercontent.com/ahmedelzae2000-cmyk/my-video-bot/main/manifest.json" --skipProvidedPathCheck
+        mkdir -p ~/.bubblewrap
+        echo "{\"jdkPath\":\"$JAVA_HOME\",\"androidSdkPath\":\"$ANDROID_HOME\"}" > ~/.bubblewrap/config.json
+        npx @bubblewrap/cli init --manifest="https://raw.githubusercontent.com/ahmedelzae2000-cmyk/my-video-bot/main/manifest.json"
         npx @bubblewrap/cli build
 
     - name: Upload APK Artifact
