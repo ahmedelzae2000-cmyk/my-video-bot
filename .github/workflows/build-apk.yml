@@ -12,7 +12,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Build Android APK with PWABuilder
-      uses: pwa-builder/pwabuilder-action@v1.0.1
+      uses: pwa-builder/pwa-action@v1.0.1
       with:
         manifest-url: 'https://raw.githubusercontent.com/ahmedelzae2000-cmyk/my-video-bot/main/manifest.json'
 
