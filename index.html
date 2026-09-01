@@ -9,10 +9,16 @@
         body { background-color: #0d1117; color: #c9d1d9; display: flex; flex-direction: column; height: 100vh; }
         header { background: #161b22; padding: 15px; text-align: center; border-bottom: 1px solid #30363d; font-size: 1.2rem; font-weight: bold; color: #58a6ff; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         #api-key-input { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 6px 10px; color: #fff; font-size: 0.85rem; outline: none; width: 220px; }
-        #chat-container { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
-        .message { max-width: 85%; padding: 12px 16px; border-radius: 12px; line-height: 1.6; font-size: 0.95rem; white-space: pre-wrap; }
+        #chat-container { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; }
+        .message { max-width: 90%; padding: 12px 16px; border-radius: 12px; line-height: 1.6; font-size: 0.95rem; white-space: pre-wrap; }
         .user-msg { background: #238636; color: #fff; align-self: flex-end; border-bottom-right-radius: 2px; }
-        .ai-msg { background: #21262d; border: 1px solid #30363d; color: #c9d1d9; align-self: flex-start; border-bottom-left-radius: 2px; }
+        .ai-msg { background: #21262d; border: 1px solid #30363d; color: #c9d1d9; align-self: flex-start; border-bottom-left-radius: 2px; width: 100%; max-width: 100%; }
+        
+.scene-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px; margin-top: 10px; }
+        .scene-title { color: #58a6ff; font-weight: bold; margin-bottom: 6px; font-size: 1rem; border-bottom: 1px solid #30363d; padding-bottom: 4px; }
+        .scene-desc { margin-bottom: 6px; color: #8b949e; }
+        .scene-voice { color: #7ee787; }
+
         #input-area { padding: 15px; background: #161b22; border-top: 1px solid #30363d; display: flex; gap: 10px; }
         input[type="text"] { flex: 1; background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 12px; color: #fff; outline: none; font-size: 1rem; }
         input:focus { border-color: #58a6ff; }
@@ -28,7 +34,7 @@
     </header>
 
     <div id="chat-container">
-        <div class="message ai-msg">أهلاً بك يا أحمد! أدخل مفتاح الـ API الخاص بك في الأعلى، ثم اكتب فكرة الفيديو وسأقوم بتأليف السيناريو وتقسيمه لمشاهد فوراً.</div>
+        <div class="message ai-msg">أهلاً بك يا أحمد! أدخل مفتاح الـ API الخاص بك في الأعلى، ثم اكتب فكرة الفيديو وسأقوم بتأليفه وتقسيمه لمشاهد مرتبة في كروت فوراً.</div>
     </div>
 
     <div id="input-area">
@@ -80,19 +86,18 @@
 
             const aiMsg = document.createElement('div');
             aiMsg.className = 'message ai-msg';
-            aiMsg.textContent = "جاري تأليف السيناريو وتجهيز المشاهد...";
+            aiMsg.textContent = "جاري تأليف السيناريو وتقسيمه لمشاهد...";
             container.appendChild(aiMsg);
             container.scrollTop = container.scrollHeight;
 
             try {
-                // تم التحديث لاستخدام موديل gemini-3.5-flash المتوافق تماماً
                 const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{
                             parts: [{
-                                text: `أنت سيناريست محترف. اكتب سيناريو فيديو احترافي ومقسّم لمشاهد بناءً على الفكرة التالية: "${text}". لكل مشهد اكتب وصف الصورة المقترحة والتعليق الصوتي المناسب.`
+                                text: `أنت سيناريست محترف. قم بتأليف سيناريو فيديو قصير بناءً على الفكرة: "${text}". قم بتقسيم السيناريو بوضوح إلى مشاهد، بحيث يبدأ كل مشهد بكلمة "المشهد" متبوعة برقمه، ثم "وصف الصورة:", ثم "التعليق الصوتي:".`
                             }]
                         }]
                     })
@@ -101,9 +106,31 @@
                 const data = await response.json();
                 
                 if(data.candidates && data.candidates[0].content) {
-                    aiMsg.textContent = data.candidates[0].content.parts[0].text;
+                    const rawText = data.candidates[0].content.parts[0].text;
+                    
+                    // تحويل النص الكلاسيكي إلى كروت مرتبة
+                    aiMsg.innerHTML = "<strong>إليك السيناريو مقسماً للمشاهد:</strong>";
+                    
+                    const scenes = rawText.split(/المشهد\s*\d+/);
+                    scenes.forEach((sceneText, index) => {
+                        if(index === 0 && sceneText.trim() === "") return;
+                        
+                        const card = document.createElement('div');
+                        card.className = 'scene-card';
+                        card.innerHTML = `
+                            <div class="scene-title">المشهد رقم ${index}</div>
+                            <div class="scene-desc">${sceneText.replace(/وصف الصورة:|التعليق الصوتي:/g, '<br><strong>$&</strong>')}</div>
+                        `;
+                        aiMsg.appendChild(card);
+                    });
+
+                    // لو التقسيم التلقائي مجابش نتيجة دقيقة، اعرض النص الأصلي منظماً
+                    if(scenes.length <= 1) {
+                        aiMsg.innerHTML = `<div style="white-space: pre-wrap;">${rawText}</div>`;
+                    }
+
                 } else if(data.error) {
-                    aiMsg.textContent = "خطأ من جوجل: " + (data.error.message || "تأكد من المفتاح.");
+                    aiMsg.textContent = "خطأ: " + (data.error.message || "تأكد من المفتاح.");
                 } else {
                     aiMsg.textContent = "عذراً، حدث خطأ في استجابة الخادم.";
                 }
