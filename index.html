@@ -7,13 +7,14 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
         body { background-color: #0d1117; color: #c9d1d9; display: flex; flex-direction: column; height: 100vh; }
-        header { background: #161b22; padding: 15px; text-align: center; border-bottom: 1px solid #30363d; font-size: 1.2rem; font-weight: bold; color: #58a6ff; }
+        header { background: #161b22; padding: 15px; text-align: center; border-bottom: 1px solid #30363d; font-size: 1.2rem; font-weight: bold; color: #58a6ff; display: flex; justify-content: space-between; align-items: center; }
+        #api-key-input { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 6px 10px; color: #fff; font-size: 0.85rem; outline: none; width: 180px; }
         #chat-container { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
-        .message { max-width: 80%; padding: 12px 16px; border-radius: 12px; line-height: 1.5; font-size: 0.95rem; }
+        .message { max-width: 85%; padding: 12px 16px; border-radius: 12px; line-height: 1.6; font-size: 0.95rem; white-space: pre-wrap; }
         .user-msg { background: #238636; color: #fff; align-self: flex-end; border-bottom-right-radius: 2px; }
         .ai-msg { background: #21262d; border: 1px solid #30363d; color: #c9d1d9; align-self: flex-start; border-bottom-left-radius: 2px; }
         #input-area { padding: 15px; background: #161b22; border-top: 1px solid #30363d; display: flex; gap: 10px; }
-        input { flex: 1; background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 12px; color: #fff; outline: none; font-size: 1rem; }
+        input[type="text"] { flex: 1; background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 12px; color: #fff; outline: none; font-size: 1rem; }
         input:focus { border-color: #58a6ff; }
         button { background: #238636; color: #fff; border: none; padding: 0 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
         button:hover { background: #2ea043; }
@@ -21,24 +22,33 @@
 </head>
 <body>
 
-    <header>صانع الفيديوهات الذكي</header>
+    <header>
+        <span>صانع الفيديوهات الذكي</span>
+        <input type="password" id="api-key-input" placeholder="أدخل Gemini API Key">
+    </header>
 
     <div id="chat-container">
-        <div class="message ai-msg">أهلاً بك! اكتب فكرة الفيديو وسأقوم بمساعدتك في توليد السيناريو والمحتوى خطوة بخطوة.</div>
+        <div class="message ai-msg">أهلاً بك! أدخل مفتاح الـ API الخاص بك في الأعلى، ثم اكتب فكرة الفيديو وسأقوم بتأليف السيناريو وتقسيمه لمشاهد فوراً.</div>
     </div>
 
     <div id="input-area">
-        <input type="text" id="user-input" placeholder="اكتب فكرة الفيديو هنا...">
+        <input type="text" id="user-input" placeholder="اكتب فكرة الفيديو هنا (مثلاً: فيديو عن تاريخ الفضاء)...">
         <button onclick="sendMessage()">إرسال</button>
     </div>
 
     <script>
-        function sendMessage() {
+        async function sendMessage() {
             const input = document.getElementById('user-input');
+            const apiKeyInput = document.getElementById('api-key-input');
             const container = document.getElementById('chat-container');
             const text = input.value.trim();
+            const apiKey = apiKeyInput.value.trim();
             
             if(!text) return;
+            if(!apiKey) {
+                alert('الرجاء إدخال مفتاح Gemini API Key في الأعلى أولاً!');
+                return;
+            }
 
             // إضافة رسالة المستخدم
             const userMsg = document.createElement('div');
@@ -49,14 +59,37 @@
             input.value = '';
             container.scrollTop = container.scrollHeight;
 
-            // محاكاة رد الذكاء الاصطناعي مؤقتاً لحين ربط الـ API
-            setTimeout(() => {
-                const aiMsg = document.createElement('div');
-                aiMsg.className = 'message ai-msg';
-                aiMsg.textContent = "جاري تحليل الفكرة وإعداد السيناريو والمشاهد...";
-                container.appendChild(aiMsg);
-                container.scrollTop = container.scrollHeight;
-            }, 1000);
+            // رسالة الانتظار
+            const aiMsg = document.createElement('div');
+            aiMsg.className = 'message ai-msg';
+            aiMsg.textContent = "جاري تأليف السيناريو وتجهيز المشاهد بالذكاء الاصطناعي...";
+            container.appendChild(aiMsg);
+            container.scrollTop = container.scrollHeight;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: `أنت خبير صناعة محتوى وسيناريست. قم بتأليف سيناريو احترافي ومقسّم لمشاهد فيديو بناءً على الفكرة التالية: "${text}". لكل مشهد اكتب وصف الصورة المقترحة والتعليق الصوتي المناسب.`
+                            }]
+                        }]
+                    })
+                });
+
+                const data = await response.json();
+                
+                if(data.candidates && data.candidates[0].content) {
+                    aiMsg.textContent = data.candidates[0].content.parts[0].text;
+                } else {
+                    aiMsg.textContent = "عذراً، حدث خطأ في التأكد من المفتاح أو الاتصال. تأكد من صحة المفتاح.";
+                }
+            } catch (error) {
+                aiMsg.textContent = "حدث خطأ أثناء الاتصال بالخادم.";
+            }
+            container.scrollTop = container.scrollHeight;
         }
     </script>
 </body>
