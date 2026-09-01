@@ -49,6 +49,8 @@ jobs:
           "appVersionName": "1.0.0",
           "appVersionCode": 1,
           "startUrl": "/ahmedelzae2000-cmyk/my-video-bot/main/index.html",
+          "iconUrl": "https://raw.githubusercontent.com/ahmedelzae2000-cmyk/my-video-bot/main/icon.png",
+          "maskableIconUrl": "https://raw.githubusercontent.com/ahmedelzae2000-cmyk/my-video-bot/main/icon.png",
           "generatorApp": "bubblewrap-cli",
           "webManifestUrl": "https://raw.githubusercontent.com/ahmedelzae2000-cmyk/my-video-bot/main/manifest.json",
           "fallbackType": "customtabs",
