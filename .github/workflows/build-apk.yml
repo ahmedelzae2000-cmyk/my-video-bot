@@ -25,15 +25,17 @@ jobs:
       with:
         node-version: '18'
 
-    - name: Create Native TWA Project
+    - name: Configure Environment
       run: |
         npm install -g @bubblewrap/cli
         mkdir -p ~/.bubblewrap
         echo "{\"jdkPath\":\"$JAVA_HOME\",\"androidSdkPath\":\"$ANDROID_HOME\"}" > ~/.bubblewrap/config.json
-        
-        # إنشاء ملف الإعدادات المباشر
+
+    - name: Generate and Build TWA APK
+      run: |
         mkdir -p app
-        cat <<EOF > ./app/twa-manifest.json
+        cd app
+        cat <<EOF > twa-manifest.json
         {
           "packageId": "com.myvideobot.twa",
           "host": "raw.githubusercontent.com",
@@ -56,23 +58,11 @@ jobs:
           "minSdkVersion": 21
         }
         EOF
-
-        # توليد البنية التحتية لتطبيق الأندرويد فقط
-        cd app
-        npx @bubblewrap/cli build --skipCluster --manifest=twa-manifest.json || true
-
-    - name: Build APK via Gradle Direct
-      run: |
-        cd app
-        if [ -f "gradlew" ]; then
-          chmod +x gradlew
-          ./gradlew assembleDebug
-        fi
+        printf "yes\n" | npx @bubblewrap/cli update
+        npx @bubblewrap/cli build
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: VideoAI-App-APK
-        path: |
-          ./app/build/outputs/apk/debug/*.apk
-          ./app/*.apk
+        path: ./app/*.apk
