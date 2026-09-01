@@ -28,14 +28,17 @@ jobs:
     - name: Install Bubblewrap CLI
       run: npm install -g @bubblewrap/cli
 
-    - name: Configure and Build App
+    - name: Configure paths
       run: |
         mkdir -p ~/.bubblewrap
         echo "{\"jdkPath\":\"$JAVA_HOME\",\"androidSdkPath\":\"$ANDROID_HOME\"}" > ~/.bubblewrap/config.json
+
+    - name: Generate Manifest and Build APK
+      run: |
         mkdir -p ./app
-        yes "" | npx @bubblewrap/cli init --manifest="https://raw.githubusercontent.com/ahmedelzae2000-cmyk/my-video-bot/main/manifest.json" --directory="./app"
         cd app
-        yes "" | npx @bubblewrap/cli build
+        npx @bubblewrap/cli init --manifest="https://raw.githubusercontent.com/ahmedelzae2000-cmyk/my-video-bot/main/manifest.json" --skipCluster
+        npx @bubblewrap/cli build --signingKeyPath="" --signingKeyAlias=""
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
