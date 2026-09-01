@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Video Creator Studio</title>
+    <title>استوديو صانع الفيديوهات الذكي</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
         body { background-color: #0d1117; color: #c9d1d9; display: flex; flex-direction: column; height: 100vh; }
@@ -27,11 +27,23 @@
         .scene-image-container { margin-top: 10px; text-align: center; }
         .scene-image-container img { max-width: 100%; border-radius: 6px; border: 1px solid #30363d; margin-top: 5px; }
 
-        #input-area { padding: 15px; background: #161b22; border-top: 1px solid #30363d; display: flex; gap: 10px; }
-        input[type="text"] { flex: 1; background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 12px; color: #fff; outline: none; font-size: 1rem; }
+        #input-area { padding: 15px; background: #161b22; border-top: 1px solid #30363d; display: flex; gap: 10px; flex-wrap: wrap; }
+        input[type="text"] { flex: 1; background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 12px; color: #fff; outline: none; font-size: 1rem; min-width: 200px;}
         input:focus { border-color: #58a6ff; }
-        button { background: #238636; color: #fff; border: none; padding: 0 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+        
+        .control-group { display: flex; gap: 10px; align-items: center; }
+        select { background: #161b22; color: #c9d1d9; border: 1px solid #30363d; border-radius: 8px; padding: 12px; font-size: 0.9rem; outline: none; cursor: pointer; }
+        button { background: #238636; color: #fff; border: none; padding: 0 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: background 0.2s; min-height: 48px;}
         button:hover { background: #2ea043; }
+        
+        @media (max-width: 600px) {
+            #input-area { flex-direction: column; }
+            .control-group { width: 100%; justify-content: space-between; }
+            input[type="text"] { width: 100%; }
+            select { width: auto; flex: 1; }
+            button { width: 100%; }
+        }
+
     </style>
 </head>
 <body>
@@ -42,39 +54,44 @@
     </header>
 
     <div id="chat-container">
-        <div class="message ai-msg">أهلاً بك يا أحمد! أدخل المفتاح بالأعلى، واكتب فكرة الفيديو وسنقوم بتوليد السيناريو وتقسيمه لمشاهد مع أزرار التحكم الفوري وصور المشاهد.</div>
+        <div class="message ai-msg">أهلاً بك! أدخل المفتاح، واكتب فكرة الفيديو، واختر وضع "التوليد التلقائي" لإنشاء السيناريو والصور فوراً.</div>
     </div>
 
     <div id="input-area">
         <input type="text" id="user-input" placeholder="اكتب فكرة الفيديو هنا..." onkeypress="handleKeyPress(event)">
-        <button onclick="sendMessage()">إنشاء الفيديو</button>
+        <div class="control-group">
+            <select id="mode-select">
+                <option value="manual">توليد يدوي (كروت فقط)</option>
+                <option value="auto">توليد تلقائي (سيناريو + صور)</option>
+            </select>
+            <button onclick="sendMessage()">إنشاء الفيديو</button>
+        </div>
     </div>
 
     <script>
         window.onload = function() {
             const savedKey = localStorage.getItem('gemini_api_key');
-            if(savedKey) {
-                document.getElementById('api-key-input').value = savedKey;
-            }
+            const savedMode = localStorage.getItem('video_gen_mode');
+            if(savedKey) document.getElementById('api-key-input').value = savedKey;
+            if(savedMode) document.getElementById('mode-select').value = savedMode;
         };
 
         function saveKey() {
-            const apiKey = document.getElementById('api-key-input').value.trim();
-            localStorage.setItem('gemini_api_key', apiKey);
+            localStorage.setItem('gemini_api_key', document.getElementById('api-key-input').value.trim());
         }
 
         function handleKeyPress(event) {
-            if (event.key === 'Enter') {
-                sendMessage();
-            }
+            if (event.key === 'Enter') sendMessage();
         }
 
         async function sendMessage() {
             const input = document.getElementById('user-input');
             const apiKeyInput = document.getElementById('api-key-input');
+            const modeSelect = document.getElementById('mode-select');
             const container = document.getElementById('chat-container');
             const text = input.value.trim();
             const apiKey = apiKeyInput.value.trim();
+            const mode = modeSelect.value;
             
             if(!text) return;
             if(!apiKey) {
@@ -83,6 +100,7 @@
             }
 
             localStorage.setItem('gemini_api_key', apiKey);
+            localStorage.setItem('video_gen_mode', mode);
 
             const userMsg = document.createElement('div');
             userMsg.className = 'message user-msg';
@@ -94,12 +112,12 @@
 
             const aiMsg = document.createElement('div');
             aiMsg.className = 'message ai-msg';
-            aiMsg.textContent = "جاري تأليف السيناريو وتقسيمه وتجهيز الاستوديو المتكامل...";
+            aiMsg.textContent = mode === 'auto' ? "جاري تأليف السيناريو وتوليد الصور لكل مشهد تلقائياً..." : "جاري تأليف السيناريو وتقسيمه لكروت يدوية...";
             container.appendChild(aiMsg);
             container.scrollTop = container.scrollHeight;
 
             try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`, {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -115,30 +133,41 @@
                 
                 if(data.candidates && data.candidates[0].content) {
                     const rawText = data.candidates[0].content.parts[0].text;
-                    aiMsg.innerHTML = "<strong>🎬 استوديو المشاهد والسيناريو الجاهز:</strong>";
+                    aiMsg.innerHTML = "<strong>🎬 الاستوديو:</strong>";
                     
                     const scenes = rawText.split(/المشهد\s*(رقم)?\s*\d+/);
-                    scenes.forEach((sceneText, index) => {
-                        if(index === 0 && sceneText.trim() === "") return;
+                    let sceneCounter = 0;
+                    
+                    for(let index = 0; index < scenes.length; index++) {
+                        const sceneText = scenes[index];
+                        if(index === 0 && sceneText.trim() === "") continue;
+                        
+                        sceneCounter++;
+                        const cleanText = sceneText.replace(/[*#]/g, '').trim();
                         
                         const card = document.createElement('div');
                         card.className = 'scene-card';
                         card.innerHTML = `
                             <div class="scene-title">
-                                <span>المشهد رقم ${index}</span>
+                                <span>المشهد رقم ${sceneCounter}</span>
                                 <div class="btn-group">
-                                    <button class="action-btn" onclick="copyScene(this)">نسخ النص</button>
-                                    <button class="action-btn img-btn" onclick="generateSceneImage(this)">توليد صورة</button>
+                                    <button class="action-btn" onclick="copyScene(this)">نسخ</button>
+                                    <button class="action-btn img-btn" onclick="generateSceneImage(this)">صورة</button>
                                 </div>
                             </div>
-                            <div class="scene-desc">${sceneText}</div>
+                            <div class="scene-desc">${cleanText}</div>
                             <div class="scene-image-container"></div>
                         `;
                         aiMsg.appendChild(card);
-                    });
+                        
+                        // لو الوضع تلقائي، ولد الصورة فوراً للكارت ده
+                        if (mode === 'auto') {
+                            await generateSceneImageManual(card);
+                        }
+                    }
 
-                    if(scenes.length <= 1) {
-                        aiMsg.innerHTML = `<div style="white-space: pre-wrap;">${rawText}</div>`;
+                    if(sceneCounter === 0) {
+                        aiMsg.innerHTML = `<div style="white-space: pre-wrap;">${rawText.replace(/[*#]/g, '')}</div>`;
                     }
 
                 } else if(data.error) {
@@ -161,25 +190,32 @@
             });
         }
 
-        function generateSceneImage(btn) {
+        async function generateSceneImage(btn) {
             const card = btn.closest('.scene-card');
+            await generateSceneImageManual(card);
+        }
+
+        // دالة مخصصة لتوليد الصورة، سواء استدعاها الزرار أو الوضع التلقائي
+        async function generateSceneImageManual(card) {
             const desc = card.querySelector('.scene-desc').textContent;
             const imgContainer = card.querySelector('.scene-image-container');
             
-            // استخراج وصف بصري مختصر لتوليد صورة عبر خدمات مجانية سريعة (Pollinations AI)
-            const promptEncoded = encodeURIComponent(desc.substring(0, 200));
-            imgContainer.innerHTML = `<p style="color: #8b949e; font-size: 0.85rem;">⏳ جاري رسم وتوليد صورة المشهد بالذكاء الاصطناعي...</p>`;
+            imgContainer.innerHTML = `<p style="color: #8b949e; font-size: 0.85rem;">⏳ جاري رسم صورة المشهد...</p>`;
             
-            const imageUrl = `https://pollinations.ai/p/${promptEncoded}?width=512&height=320&seed=${Math.floor(Math.random() * 1000)}`;
+            const randomId = Math.floor(Math.random() * 10000);
+            // استخدام رابط سريع ومستقر للصور (picsum.photos)
+            const imageUrl = `https://picsum.photos/seed/${randomId}/512/320`;
             
-            const img = new Image();
-            img.src = imageUrl;
-            img.onload = function() {
-                imgContainer.innerHTML = `<img src="${imageUrl}" alt="صورة المشهد">`;
-            };
-            img.onerror = function() {
+            try {
+                const response = await fetch(imageUrl);
+                if (response.ok) {
+                    imgContainer.innerHTML = `<img src="${imageUrl}" alt="صورة المشهد">`;
+                } else {
+                    throw new Error('فشل تحميل الصورة');
+                }
+            } catch (error) {
                 imgContainer.innerHTML = `<p style="color: #f85149; font-size: 0.85rem;">تعذر توليد الصورة، حاول مرة أخرى.</p>`;
-            };
+            }
         }
     </script>
 </body>
